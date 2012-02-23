@@ -1,0 +1,52 @@
+#!/bin/bash
+
+gbn=$(basename "${BASH_SOURCE}")
+if ! test -r "${gbn}.dat" ; then
+  exit 1
+fi
+source "${gbn}.dat"
+
+### crop
+vmdmgr reset
+vstool -i "${crop_from}" -t "${crop}"
+if test $? -gt 0 ; then
+  exit 1
+fi
+embed="vstool.POSCAR"
+
+### embed
+for i in "${host}" "${embed}" ; do
+  if ! test -r "${i}" ; then
+    msg "Not found: ${i}"
+    exit 1
+  fi
+done
+vmdmgr load "${host}"
+
+_host="${host}:${host_no}"
+_embed="${embed}:${embed_no}"
+
+vsembed -i "${_host}" -e "${_embed}"
+if test $? -gt 0 ; then
+  exit 1
+fi
+_out="vsembed.POSCAR"
+if ! test -r "${_out}"; then
+  echo "Not found: ${_out}"
+  exit 1
+fi
+
+### geom
+vstool -i "${_out}" -t "${geom}"
+if test $? -gt 0 ; then
+  exit 1
+fi
+_out="vstool.POSCAR"
+if ! test -r "${_out}"; then
+  echo "Not found: ${_out}"
+  exit 1
+fi
+
+cp -f "${_out}" "${geom_to}"
+
+vmdmgr load "${geom_to}"
